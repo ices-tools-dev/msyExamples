@@ -1,0 +1,84 @@
+\documentclass{article}
+\usepackage{mathpazo}
+\renewcommand{\sfdefault}{lmss}
+\renewcommand{\ttdefault}{lmtt}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose, tmargin = 2cm, bmargin = 2cm, lmargin = 2.5cm, rmargin = 2.5cm}
+\begin{document}
+
+<<set-options, echo = FALSE, cache = FALSE>>=
+  options(replace.assign = TRUE)
+  knit_hooks $ set( 
+    par = function(before, options, envir)
+          {
+            if (before) par(mar=c(4,4,.1,.1), cex.lab=.95, cex.axis=.9, mgp=c(2,.7,0),tcl=-.3)
+          }
+  )
+  opts_chunk $ set( 
+    fig.path = 'figure/cod6a-', 
+    cache.path = 'cache/cod6a-', 
+    external = TRUE, 
+    fig.width = 7, 
+    fig.height = 4, 
+    fig.align = 'center', 
+    cache = TRUE, 
+    fig.show = 'hold', 
+    par = TRUE,
+    eval = FALSE
+  )
+  read_chunk('cod6a.R')
+@
+
+\title{Examples of using the msy package}
+
+
+\author{Colin Millar}
+\maketitle
+
+To install the \texttt{msy} package the best way is to install Hadley Wickams devtools and use the function \texttt{install\_github}.  If you are using windows you will also need to install \texttt{Rtools.exe} which is a collection of software which enables you to compile R packages from source code.  Run the following lines to install the latest version of msy, any other packages that you require will automatically be downloaded from CRAN, the R package repository.  All except for FLCore, which is also installed from github.
+<<install, eval=FALSE>>=
+@
+
+%This document was created using the \texttt{knitr} library.  The source can be found in the ...
+
+\section{Exploring Maximum Sustainable Yeild of North Sea Cod using EqSim}
+
+First load the library and load in some data.  The north sea cod data has been preloaded as an FLStock object.  This is the EqSim method requires an FLStock to work.
+<<library>>=
+@
+
+<<loadcod>>=
+@
+
+\subsection{Segmented regression}
+
+<<setupcod>>=
+@
+
+<<codsegreg>>=
+@
+
+<<getref1>>=
+@
+
+<<codbevholt>>=
+@
+
+<<codricker>>=
+@
+
+<<codall>>=
+@
+
+<<codallvar>>=
+@
+
+<<summarise>>=
+@
+
+
+
+
+\end{document}
+
