@@ -5,6 +5,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{geometry}
 \geometry{verbose, tmargin = 2cm, bmargin = 2cm, lmargin = 2.5cm, rmargin = 2.5cm}
+\setlength{\parindent}{0cm}
 \begin{document}
 
 <<set-options, echo = FALSE, cache = FALSE>>=
@@ -16,8 +17,8 @@
           }
   )
   opts_chunk $ set( 
-    fig.path = 'figure/cod6a-', 
-    cache.path = 'cache/cod6a-', 
+    fig.path = 'figure/codNS-', 
+    cache.path = 'cache/codNS-', 
     external = TRUE, 
     fig.width = 7, 
     fig.height = 4, 
@@ -25,9 +26,9 @@
     cache = TRUE, 
     fig.show = 'hold', 
     par = TRUE,
-    eval = FALSE
+    eval = TRUE
   )
-  read_chunk('cod6a.R')
+  read_chunk('codNS.R')
 @
 
 \title{Examples of using the msy package}
@@ -51,30 +52,130 @@ First load the library and load in some data.  The north sea cod data has been p
 <<loadcod>>=
 @
 
-\subsection{Segmented regression}
+In the following subsections we will simulate the north sea cod stock into the future under some basic assumptions.  For the simulations we need to chose which years we will use to generate noise in the quantities: weight at age, maturity at age, natural mortality at age, and selection pattern.  We also need to choose a set of Fbar values to simulate over in order estimate F referece points.  A convenient way to store this set up information is to contain it in a list  
 
-<<setupcod>>=
+<<setupcod, tidy = FALSE>>=
 @
 
+\subsection{Segmented regression worked example}
+
+Using the settings defined in the previous section we can run the three components of the simulation approach to estimating MSY reference points.  The components are:
+\begin{enumerate}
+  \item Estimate the stock recruitment relationship
+  \item Simulate a stock to equilibrium and continue simulating for some years
+  \item Calculate reference points from the simulated stock at equilibrium
+\end{enumerate}
+
+This is done in one go with the code
 <<codsegreg>>=
 @
 
+The reference points can be accessed by
 <<getref1>>=
 @
+
+And summary plots are got by calling the Eqplot function again
+<<plotref1, fig.height = 7, results = 'hide'>>=
+@
+
+The stock recruitment fit is returned by fitModels and is plotted using the SRplot function
+<<plotsr1, fig.width = 5, fig.height = 5, results = 'hide'>>=
+@
+
+These are the main functions of the EqSim approach. The following paragraphs will cover each step in more detail.      
+
+\paragraph{Model fitting} is done by maximum likelihood using the nlminb optimiser in R. By refitting to non-parametric bootstrap resamples of the stock and recruit pairs, samples from the approximate joint distribution of the model parameters can be made.  This all happens in the fitModels function.  The fitModels function first sets up the stock and recruit pairs based on the information in the FLStock object and removes any incomplete pairs, before dispatching on the model fitting / averaging algorithm chosen.  Currently only a bootstrap based model averaging method called smooth AIC is implemented fully.  The details can be found in fitModelsBuck.  The algorithm implented is
+\begin{enumerate}
+\item take a resample with replacement from the stock and recruit pairs
+\item fit every stock-recruit model under consideration and store the AIC of each
+\item retain the parameter estimates from the best model
+\item repeat
+\end{enumerate}
+This process provides a robust way to average over several models, as long as the bootstrap resampleing procedure prevides an adequate approximation to the empirical distribution of the stock and recruit pairs.
+
+The arguments to the fitting function are
+<<args1>>=
+args(fitModels)
+@
+Where stk is an FLStock, nsamp is the number of simulations to run a simulation for, models is the models to average over (one model may be supplied), remove.years is used to remove outlying years from the fit, delta and nburn are related to an MCMC based fitting procedure that is not complete, and runid is an oportunity for the user to name the fit.
+
+The results from the fitting process are returned to the user as a list
+<<codsgfit>>=
+@
+where fit is a sample from the joint distribution of the estimated model and parameters, pred is an accosiated sample from the predictive distribution of recruitment based on the model and parameters in fit and the SSB values used , fits contains the fitted parameters to the observed data, data contains the data used, stknam holds the name of the stock for plotting later on, and stk retains the origional FLStock object.
+
+\paragraph{Simulating forward} is done using the EqSim function.  The function takes as input the output from the fitModel function. Simulations are run independently for each sample from the distribution of model and parameters.  This is done for a range of Fbar values. For example if we scanned over 10 values of Fbar and had taken 200 samples from the stock-recruit relationship then 2000 simulations would be run in total.  These simulations run for 200 years say, and the last 50 years are retained to calculate summaries, like the proportion of times the stock crashes at a given level of F.  It is important to note that each simulation is conditioned on a single stock recruit relationship with fixed parameters (including CV).
+
+Error is introduced within the simulations randomly generating process error about the constant stock-recruit fit, and by using historical variation in Maturity, natural mortality, weight at age etc.  Note that if there is no variability in these quantities in the stock object then no variability will be taken in to the simulations.
+
+The arguments to the simulation function are
+<<args2>>=
+args(EqSim)
+@
+where fit is the output from fitModels, Nrun is the number of years to simulate forward, fixed for now is that the last 50 are used for summarising erqualibrium conditions, wt.years is the start and end year from which to generate the noise in weight at age etc., Fscan is the range of Fbar values to scan over, process.error allows the simulations to be run using the predictive distribition of recruitment or the mean recruitment, verbose = TRUE shows a progress bar to the user, and Btrigger is the location of the ramp in a simple HCR, if Btrigger is 0 this is like having no HCR present.
+
+The results from the simulation process are returned to the user as a list
+<<codsgsim>>=
+@
+where ssbs, cats and recs contains the 0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975 percentiles of the simulations of SSB, catch and recruitment for each Fscan value. ssbsa, catsa and recsa contain, for each Fscan value the final 50 years for each simulation of SSB, catch and recruitment.  The remaining values show the range of variability included for maturity, natural mortality etc. and the Fbar values used.
+
+\paragraph{Reference points} are derived from the output of EqSim.
+
+
+\subsection{Beverton and Holt}
+
+
 
 <<codbevholt>>=
 @
 
+\subsection{Ricker}
+
+
 <<codricker>>=
 @
+
+\subsection{Model averaging}
 
 <<codall>>=
 @
 
+\subsection{Model averaging with extra bits}
+
 <<codallvar>>=
 @
 
+\subsection{A summary of the simulations}
+
 <<summarise>>=
+@
+
+
+
+\appendix
+
+\section{Code}
+
+The EqSim function takes a fitted model
+
+<<fitModels>>=
+fitModels
+@
+
+<<fitModelsBuck>>=
+fitModelsBuck
+@
+
+<<SRplot>>=
+SRplot
+@
+
+<<EqSim>>=
+EqSim
+@
+
+<<Eqplot>>=
+Eqplot
 @
 
 
