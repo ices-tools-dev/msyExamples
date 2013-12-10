@@ -79,8 +79,12 @@ And summary plots are got by calling the Eqplot function again
 @
 
 The stock recruitment fit is returned by fitModels and is plotted using the SRplot function
-<<plotsr1, fig.width = 5, fig.height = 5, results = 'hide'>>=
+%<<plotsr1, fig.width = 5, fig.height = 5, results = 'hide'>>=
+%@
+
+<<plotsr1, eval = FALSE>>=
 @
+
 
 These are the main functions of the EqSim approach. The following paragraphs will cover each step in more detail.      
 
